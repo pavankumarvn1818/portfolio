@@ -5,12 +5,12 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const port =process.env.PORT
+const port = process.env.PORT || 5000;
+
 app.post("/contact", async (req, res) => {
   const { name, email, message } = req.body;
 
@@ -19,21 +19,30 @@ app.post("/contact", async (req, res) => {
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // App password
+        pass: process.env.EMAIL_PASS,
       },
     });
 
     await transporter.sendMail({
-      from: email,
+      from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER,
       subject: `Portfolio Contact from ${name}`,
-      text: message,
+
+      text: `
+Name: ${name}
+Email: ${email}
+Message: ${message}
+      `,
+
+      replyTo: email
     });
 
     res.status(200).json({ success: true, message: "Email sent" });
+
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: "Error sending email" });
   }
 });
 
-app.listen(port, () => console.log("Server running on port 5000"));
+app.listen(port, () => console.log(`Server running on port ${port}`));
